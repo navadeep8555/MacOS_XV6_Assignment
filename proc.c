@@ -188,6 +188,7 @@ fork(void)
   if((np = allocproc()) == 0){
     return -1;
   }
+  np->mkdir_count = 0;  //mkdir count=0 for new process
 
   // Copy process state from proc.
   if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
@@ -531,4 +532,33 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+//current process status
+int cps()
+{
+	struct proc *p;
+	sti();
+	
+	acquire(&ptable.lock);
+	cprintf("name \t pid \t state \t \n");
+	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    	if(p->state == SLEEPING)
+      	  cprintf("%s \t %d \t SLEEPING \t \n", p->name, p->pid);
+    	else if(p->state == RUNNING)
+      	  cprintf("%s \t %d \t RUNNING \t \n", p->name, p->pid);
+    	else if(p->state == RUNNABLE)
+      	  cprintf("%s \t %d \t RUNNABLE \t \n", p->name, p->pid); 
+    	}
+    	release(&ptable.lock);
+    	
+    	return 22;
+  }
+  
+int turnoff()
+{
+   cprintf("Turning off..\n");
+   char *p = "Shutdown";
+   for(; *p; p++)
+     outw(0xB004,0x2000);
+   return 24;
 }

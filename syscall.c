@@ -103,6 +103,10 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
+extern int sys_cps(void);
+extern int sys_mkdir_count(void);
+extern int total_calls;
+extern int sys_turnoff(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -126,20 +130,26 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_cps]     sys_cps,
+[SYS_mkdir_count]  sys_mkdir_count,
+[SYS_turnoff] sys_turnoff,
 };
 
 void
 syscall(void)
 {
   int num;
-  struct proc *curproc = myproc();
+  struct proc *curproc = myproc(); // Get the current process
 
-  num = curproc->tf->eax;
+  num = curproc->tf->eax; // Access the syscall number from the trapframe
+  if (num == SYS_mkdir) {
+    total_calls++; // Increment the total mkdir calls counter
+  }
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
-    curproc->tf->eax = syscalls[num]();
+    curproc->tf->eax = syscalls[num](); // Execute the syscall function corresponding to the syscall number
   } else {
     cprintf("%d %s: unknown sys call %d\n",
             curproc->pid, curproc->name, num);
-    curproc->tf->eax = -1;
+    curproc->tf->eax = -1; // Return -1 for unknown syscalls
   }
 }
